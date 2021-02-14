@@ -8,7 +8,6 @@
 #kütüphaneleri import ettim
 
 import pandas as pd
-import pymysql
 import ast
 import math
 import scipy.stats as st
@@ -21,32 +20,10 @@ pd.set_option('display.max_columns', None)
 pd.set_option('display.expand_frame_repr', False)
 
 
-# credentials.
-creds = {'user': 'group4',
-         'passwd': 'haydegidelum',
-         'host': 'db.github.rocks',
-         'port': 3306,
-         'db': 'group4'}
-
-# MySQL conection string.
-connstr = 'mysql+mysqlconnector://{user}:{passwd}@{host}:{port}/{db}'
-
-
-# sqlalchemy engine for MySQL connection.
-conn = create_engine(connstr.format(**creds))
-
-query = "select * from df_sub.csv limit 5"
-pd.read_sql_query(query, conn)
-
-
-query = "select asin, count(asin) as count from reviews" \
-        " group by asin order by count desc limit 10"
-data_count_asin = pd.read_sql_query(query, conn)
-data_count_asin.head()
 
 
 ###################################################
-# Adım 3. En fazla yorum alan ürüne göre veri setini indirgeyiniz (df_sub)
+# Adım 3. En fazla yorum alan ürüne göre veri seti
 ###################################################
 pd.set_option('display.max_columns', None)
 data = pd.read_csv(r"C:\Users\Suleakcay\PycharmProjects\pythonProject3\Datasets\df_sub.csv")
@@ -57,16 +34,15 @@ df_sub.columns
 df_sub.shape
 df_sub.isnull().sum() #reviewrName(1) ve reviewText(1) eksik değer var
 df_sub.head()
-###################################################
-# Adım 4. Ürünün ortalama puanı nedir?
-###################################################
+
+# Adım 4. Ürünün ortalama puanı
+
 df_sub["mean"] = df_sub["overall"].mean()
 #4.587589013224822
 
 
-###################################################
-# Adım 5. Tarihe ağırlıklı puan ortalaması hesaplayınız.
-###################################################
+# Adım 5. Tarihe ağırlıklı puan ortalaması 
+
 
 # day_diff hesaplamak için: (yorum sonrası ne kadar gün geçmiş)
 df_sub['reviewTime'] = pd.to_datetime(df_sub['reviewTime'], dayfirst=True)
@@ -81,9 +57,8 @@ b = df_sub["day_diff"].quantile(0.50)
 c = df_sub["day_diff"].quantile(0.75)
 #601.0
 
-###################################################
 # Adım 6. Önceki maddeden gelen a,b,c değerlerine göre ağırlıklı puanı hesaplayınız.
-###################################################
+
 df_sub['weighted'] = df_sub.loc[(df_sub['day_diff'] <= a), 'overall'].mean() *27 /100 + \
     df_sub.loc[(df_sub['day_diff'] > a) & (df_sub['day_diff'] <= b), 'overall'].mean() *28 /100 + \
     df_sub.loc[(df_sub['day_diff'] > b) & (df_sub['day_diff'] <= c), 'overall'].mean() * 20 / 100 + \
@@ -92,13 +67,13 @@ df_sub['weighted'] = df_sub.loc[(df_sub['day_diff'] <= a), 'overall'].mean() *27
 df_sub['weighted'].mean() #bir önceki ortalama 4.587589013224822  şimdiki 4.591879221719786
 
 
-###################################################
-# Görev 2: Product tanıtım sayfasında görüntülenecek ilk 20 yorumu belirleyiniz.
-###################################################
 
-###################################################
-# Adım 1. Helpful değişkeni içerisinden 3 değişken türetiniz. 1: helpful_yes, 2: helpful_no,  3: total_vote
-###################################################
+# Product tanıtım sayfasında görüntülenecek ilk 20 yorumu belirleyiniz.
+
+
+
+#  Helpful değişkeni içerisinden 3 değişken türetiniz. 1: helpful_yes, 2: helpful_no,  3: total_vote
+
 
 # Helpful içerisinde 2 değer vardır. Birincisi yorumları faydalı bulan oy sayısı ikincisi toplam oy sayısı.
 # Dolayısıyla önce ikisini ayrı ayrı çekmeli sonra da (total_vote - helpful_yes) yaparak helpful_no'yu hesaplamalısınız
@@ -115,18 +90,18 @@ df_sub["total_vote"] = df_sub["helpful_yes"] + df_sub["helpful_no"]
 df_sub.head()
 
 
-###################################################
-# Adım 2. score_pos_neg_diff'a göre skorlar oluşturunuz ve df_sub içerisinde score_pos_neg_diff ismiyle kaydediniz.
-###################################################
+
+#  score_pos_neg_diff'a göre skorlar oluşturunuz ve df_sub içerisinde score_pos_neg_diff ismiyle kaydediniz.
+
 def score_pos_neg_diff(positive_score, negative_score):
     return positive_score - negative_score
 
 df_sub["score_pos_neg_diff"] = df_sub.apply(lambda x: score_pos_neg_diff(x['helpful_yes'], x['helpful_no']),axis=1)
 df_sub.sort_values('score_pos_neg_diff', ascending=False).head()
 
-###################################################
+
 # Adım 3. score_average_rating'a göre skorlar oluşturunuz ve df_sub içerisinde score_average_rating ismiyle kaydediniz.
-###################################################
+
 # Score = Average rating = (Positive ratings) / (Total ratings)
 
 def score_average_rating(pos, neg):
@@ -171,9 +146,8 @@ def wilson_lower_bound(pos, neg, confidence=0.95):
 df_sub["wilson_lower_bound"] = df_sub.apply(lambda x: wilson_lower_bound(x['helpful_yes'], x['helpful_no']), axis=1)
 df_sub.sort_values('wilson_lower_bound', ascending=False).head()
 
-##################################################
-# Adım 5. Ürün sayfasında gösterilecek 20 yorumu belirleyiniz ve sonuçları yorumlayınız.
-###################################################
+# Ürün sayfasında gösterilecek 20 yorumu belirleyiniz
+
 df_sub.columns
 df_sub[['summary', 'helpful', 'overall', 'mean', 'weighted', 'score_pos_neg_diff', 'score_average_rating', 'wilson_lower_bound']]
 df_sub.sort_values('wilson_lower_bound', ascending=False).head(20)
@@ -202,10 +176,3 @@ df_sub.sort_values('wilson_lower_bound', ascending=False).head(20)
 #1142  A1PLHPPAJ5MUXG  B007WTAJTO  Daniel Pham(Danpham_X @ yahoo.  com)        [5, 5]  As soon as I saw that this card was announced ...     5.00                          Great large capacity card      1396396800 2014-02-04  4.59       307      4.59            5           5          10                   0                  0.50                0.24
 #1072  A2O96COBMVY9C4  B007WTAJTO                        Crysis Complex        [5, 5]  What more can I say? The 64GB micro SD works f...     5.00               Works wonders for the Galaxy Note 2!      1349395200 2012-05-10  4.59       942      4.59            5           5          10                   0                  0.50                0.24
 
-#veri setinde yorumları help_yes ve help_no değerlerine göre wilson_lower_bound fonksiyonuna göre sıraladım.
-#2268 indeksteki eleman bana kalırsa sıralamada daha aşağıda olabilirdi yes_help ve no_help poranına göre.
-#Genel ortalamaları eşittir.
-#2582 indeksteki yorum diğer 1142 ve 1072 indeksteki yorumlardaki score_average_rating değerlerinden daha düşüktür
-#score_average_rating fonksiyonun doğruluğuna tam net güvenseydik 2582.indeksteki yorum sıralamada daha aşaağıda kalacaktı.
-#Burada açıkça bizi kurtaran Wilson_lower_bound fonksiyonu olduğudur.Bellli bir güven aralığına göre hesaplanıyor.
-#Buda 2582.indeksteki yorumun daha yukarıda olmasını sağlar...
