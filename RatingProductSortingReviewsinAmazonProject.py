@@ -85,8 +85,8 @@ type(df_sub['helpful'][0])
 type(ast.literal_eval(df_sub['helpful'][0]))
 
 df_sub["helpful_yes"] = df_sub['helpful'].apply(lambda x: x[0])
-df_sub["helpful_no"] = df_sub['helpful'].apply(lambda x: x[1])
-df_sub["total_vote"] = df_sub["helpful_yes"] + df_sub["helpful_no"]
+df_sub["total_vote"] = df_sub['helpful'].apply(lambda x: x[1])
+df_sub["helpful_no"] = df_sub["total_vote"] - df_sub["helpful_yes"]
 df_sub.head()
 
 
